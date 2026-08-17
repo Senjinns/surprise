@@ -301,27 +301,41 @@ const CONFIG = {
     window.scrollTo({top:0,behavior:"smooth"});
   }
 
-  /* bouton NON qui s'enfuit */
+/* bouton NON qui s'enfuit */
   const no = $("#noBtn");
-  function flee(){
-    const x = (Math.random()*2-1) * Math.min(140, window.innerWidth*0.3);
-    const y = (Math.random()*2-1) * 120;
-    no.style.position="relative";
-    no.style.transform=`translate(${x}px,${y}px) rotate(${(Math.random()*20-10)|0}deg)`;
+  let noBase = null;   // position d'origine du bouton, mesurée une seule fois
+
+  function flee(ev){
+    if (!noBase) noBase = no.getBoundingClientRect();
+
+    const m = 10;                                          // marge avec les bords
+    const maxX = window.innerWidth  - noBase.width  - m;
+    const maxY = window.innerHeight - noBase.height - m;
+
+    // où est le curseur (souris ou doigt) ? pour fuir loin de lui
+    const p  = ev && ev.touches ? ev.touches[0] : ev;
+    const cx = p && p.clientX != null ? p.clientX : noBase.left + noBase.width  / 2;
+    const cy = p && p.clientY != null ? p.clientY : noBase.top  + noBase.height / 2;
+
+    let x, y, tries = 0;
+    do {
+      x = m + Math.random() * (maxX - m);
+      y = m + Math.random() * (maxY - m);
+      tries++;
+    } while (tries < 30 &&
+             Math.hypot(x + noBase.width/2 - cx, y + noBase.height/2 - cy) < 150);
+
+    no.style.position  = "relative";
+    no.style.zIndex    = 5;
+    no.style.transform =
+      `translate(${x - noBase.left}px, ${y - noBase.top}px) rotate(${(Math.random()*24-12)|0}deg)`;
   }
+
   no.addEventListener("mouseenter", flee);
-  no.addEventListener("click", e=>{ e.preventDefault(); flee(); });
-
-  $("#yesBtn").onclick = ()=>{ go("step-food"); burst(); };
-  $("#foodBtn").onclick= ()=> go("step-when");
-
-  function validateWhen(){
-    choices.date = $("#dateInput").value;
-    choices.time = $("#timeInput").value;
-    $("#whenBtn").disabled = !(choices.date && choices.time);
-  }
-  $("#dateInput").addEventListener("change", validateWhen);
-  $("#timeInput").addEventListener("change", validateWhen);
+  no.addEventListener("mousemove",  flee);   // s'il atterrit pile sous le curseur
+  no.addEventListener("click",      e=>{ e.preventDefault(); flee(e); });
+  no.addEventListener("touchstart", e=>{ e.preventDefault(); flee(e); }, {passive:false});
+  window.addEventListener("resize", ()=>{ no.style.transform=""; noBase=null; });
 
   $("#whenBtn").onclick = ()=>{ finish(); go("step-final"); burst(); };
 
