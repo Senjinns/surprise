@@ -302,28 +302,36 @@ const CONFIG = {
   }
 
 /* bouton NON qui s'enfuit */
-  const no = $("#noBtn");
-  let noBase = null;   // position d'origine du bouton, mesurée une seule fois
+  const no  = $("#noBtn");
+  const yes = $("#yesBtn");
+  let noBase = null;
 
   function flee(ev){
     if (!noBase) noBase = no.getBoundingClientRect();
 
-    const m = 10;                                          // marge avec les bords
+    const m = 10;
     const maxX = window.innerWidth  - noBase.width  - m;
     const maxY = window.innerHeight - noBase.height - m;
 
-    // où est le curseur (souris ou doigt) ? pour fuir loin de lui
     const p  = ev && ev.touches ? ev.touches[0] : ev;
     const cx = p && p.clientX != null ? p.clientX : noBase.left + noBase.width  / 2;
     const cy = p && p.clientY != null ? p.clientY : noBase.top  + noBase.height / 2;
+
+    // zone interdite : le bouton OUI (+ une marge), sinon il vole le clic
+    const y0 = yes.getBoundingClientRect(), pad = 24;
+    const chevauche = (x,y) =>
+      x < y0.right  + pad && x + noBase.width  > y0.left - pad &&
+      y < y0.bottom + pad && y + noBase.height > y0.top  - pad;
 
     let x, y, tries = 0;
     do {
       x = m + Math.random() * (maxX - m);
       y = m + Math.random() * (maxY - m);
       tries++;
-    } while (tries < 30 &&
-             Math.hypot(x + noBase.width/2 - cx, y + noBase.height/2 - cy) < 150);
+    } while (tries < 60 && (
+      Math.hypot(x + noBase.width/2 - cx, y + noBase.height/2 - cy) < 150 || chevauche(x, y)
+    ));
+    if (chevauche(x, y)) { x = maxX; y = maxY; }   // repli : coin bas-droite
 
     no.style.position  = "relative";
     no.style.zIndex    = 5;
