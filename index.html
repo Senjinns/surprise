@@ -345,9 +345,19 @@ const CONFIG = {
   no.addEventListener("touchstart", e=>{ e.preventDefault(); flee(e); }, {passive:false});
   window.addEventListener("resize", ()=>{ no.style.transform=""; noBase=null; });
 
-  $("#whenBtn").onclick = ()=>{ finish(); go("step-final"); burst(); };
 $("#yesBtn").onclick = ()=>{ go("step-celebrate"); burst(); };
   $("#celBtn").onclick = ()=> go("step-food");
+  $("#foodBtn").onclick= ()=> go("step-when");
+
+  function validateWhen(){
+    choices.date = $("#dateInput").value;
+    choices.time = $("#timeInput").value;
+    $("#whenBtn").disabled = !(choices.date && choices.time);
+  }
+  $("#dateInput").addEventListener("change", validateWhen);
+  $("#timeInput").addEventListener("change", validateWhen);
+
+  $("#whenBtn").onclick = ()=>{ finish(); go("step-final"); burst(); };
   
   /* ---------- final : calendrier + email ---------- */
   function pad(n){return String(n).padStart(2,"0");}
